@@ -7,3 +7,5 @@ Version
 npm install
 # Run server 
 npm start
+# Port 8083 
+launch http://localhost:8083/ and that's it 
