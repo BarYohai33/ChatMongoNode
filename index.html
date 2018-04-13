@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Super Chat temps réel !</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <style>
+            #zone_chat strong {
+                padding: 2px;
+            }
+            .messages{
+            height:400px;
+            }
+        </style>
+    </head>
+ 
+    <body>
+        <h1>Le super Chat temps réel !</h1>
+  <body>
+    <div class="container">
+      <div class="col-md-6 col-lg-6 col-md-offset-3 col-lg-offset-3">
+        <h1 class="text-center">MongoChat <button class="btn btn-danger clearBtn" id="btn_clear">Clear</button></h1>
+        <div class="status"></div>
+        <div class="chat">
+          <input type="text" class="username form-control" placeholder="What's Your Name?" id="pseudo">
+          <br>
+          <div class="messages well" id="zone_chat"></div>
+          <textarea class="form-control" placeholder="Enter Message.." id="message"></textarea>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+
+            // Connexion à socket.io
+            var socket = io.connect('http://localhost:8083');
+
+            // On demande le pseudo, on l'envoie au serveur et on l'affiche dans le titre
+            var pseudo = document.querySelector('#pseudo');
+            pseudo.addEventListener('keypress', (e) => {
+            var key = e.which || e.keyCode;
+            if (key === 13) { 
+            pseudo = document.querySelector('#pseudo').value;
+            document.querySelector('#pseudo').disabled = true;
+            document.title = pseudo + ' - ' + document.title;
+            socket.emit('nouveau_client', pseudo);
+            }
+            });
+
+            // On récupère les anciennes conversations : 
+            socket.on('lastmessages', function(data) {
+            insereMessage(data.pseudo, data.message)
+            })
+
+
+            // Quand on reçoit un message, on l'insère dans la page
+            socket.on('message', function(data) {
+                insereMessage(data.pseudo, data.message)
+            })
+
+            // Quand un nouveau client se connecte, on affiche l'information
+            socket.on('nouveau_client', function(pseudo) {
+                $('#zone_chat').prepend('<p><em>' + pseudo + ' a rejoint le Chat !</em></p>');
+            })
+
+
+            // Lorsqu'on envoie le formulaire, on transmet le message et on l'affiche sur la page
+            message.addEventListener('keypress', function (e) {
+            var key = e.which || e.keyCode;
+            if (pseudo.value === ''){
+                alert('veuillez entrez un pseudo svp');
+            }
+            if (key === 13 && pseudo.value !== '') { 
+            var message = $('#message').val();
+            socket.emit('message', message); // Transmet le message aux autres
+            insereMessage(pseudo, message); // Affiche le message aussi sur notre page
+            $('#message').val('').focus(); // Vide la zone de Chat et remet le focus dessus
+            return false; // Permet de bloquer l'envoi "classique" du formulaire
+
+            }
+            });
+
+
+            btnClear = document.querySelector('#btn_clear'); 
+            btnClear.addEventListener("click", function(){
+                socket.emit('delete');
+                $('#zone_chat').html('');
+            });       
+            // Ajoute un message dans la page
+            function insereMessage(pseudo, message) {
+                $('#zone_chat').prepend('<p><strong>' + pseudo +' :' + '</strong> ' + message + '</p>');
+            }
+        </script>
+    </body>
+</html>
+
